@@ -24,12 +24,13 @@ const client = new MongoClient(uri, {
     }
 });
 
-async function run() {
-    try {
-        // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+
 
         const collegeCollection = client.db('grandCollege').collection('colleges');
+        const galleryCollection = client.db('grandCollege').collection('gallery');
+        const admissionCollection = client.db('grandCollege').collection('admission');
+        const usersCollection = client.db('grandCollege').collection('users');
+        
 
         app.get('/colleges', async (req, res) => {
             const search = req.query.search;
@@ -43,7 +44,7 @@ async function run() {
             let result;
             if (search) {
                 const nameQuery = { name: { $regex: search, $options: 'i' } };
-                result = await addToysCollection.find({ $and: [query, nameQuery] }).toArray();
+                result = await collegeCollection.find({ $and: [query, nameQuery] }).toArray();
             } else {
                 result = await collegeCollection.find(query).toArray();
             }
@@ -58,16 +59,43 @@ async function run() {
             res.send(result);
         });
 
+        app.get('/gallery', async (req, res) => {
+            const result = await galleryCollection.find().toArray();
+            res.send(result);
+        })
+        
+        app.post('/admission', async (req, res) => {
+            const users = req.body;
+            console.log(users);
+            const result = await admissionCollection.insertOne(users);
+            res.send(result);
+        });
 
-        // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
-    } finally {
-        // Ensures that the client will close when you finish/error
-        // await client.close();
-    }
-}
-run().catch(console.dir);
+        app.get('/admission', async (req, res) => {
+            console.log(req.query.email);
+            let query = {};
+            if (req.query?.email) {
+                query = { email: req.query.email };
+            }
+            const result = await admissionCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        app.post('/users', async (req, res) => {
+            const users = req.body;
+            console.log(users);
+            const result = await usersCollection.insertOne(users);
+            res.send(result);
+        });
+        app.get('/users', async (req, res) => {
+            console.log(req.query.email);
+            let query = {};
+            if (req.query?.email) {
+                query = { email: req.query.email };
+            }
+            const result = await usersCollection.find(query).toArray();
+            res.send(result);
+        });
 
 
 app.get('/', (req, res) => {
